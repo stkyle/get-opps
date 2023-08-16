@@ -1,0 +1,5 @@
+httpx
+ratelimit
+tenacity
+cachetools
+pydantic
