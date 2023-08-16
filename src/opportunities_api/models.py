@@ -61,3 +61,62 @@ class RequestParameters(BaseModel):
     offset: Optional[int] = Field(None, description="Enter offset value")
     api_key: Optional[str] = Field(None, description="Enter the Public API Key.")
 
+class Address(BaseModel):
+    streetAddress: Optional[str]
+    city: Optional[str]
+    state: Optional[str]
+    zip: Optional[str]
+
+class Awardee(BaseModel):
+    name: Optional[str]
+    ueiSAM: Optional[str]
+    location: Address
+
+class Award(BaseModel):
+    number: Optional[str]
+    amount: Optional[float]
+    date: Optional[str]
+    awardee: Optional[Awardee]
+
+class PointOfContact(BaseModel):
+    type: Optional[str]
+    title: Optional[str]
+    fullname: Optional[str]
+    email: Optional[str]
+    phone: Optional[str]
+    fax: Optional[str]
+    additionalInfo: Optional[str]
+    additionalInfo_content: Optional[str]
+
+class ResponseParameters(BaseModel):
+    totalRecords: int
+    limit: int
+    offset: int
+    title: Optional[str]
+    solicitationNumber: Optional[str]
+    fullParentPathName: Optional[str]
+    fullParentPathCode: Optional[str]
+    department: Optional[str]
+    subtier: Optional[str]
+    office: Optional[str]
+    postedDate: Optional[str]
+    type: Optional[str]
+    baseType: Optional[str]
+    archiveType: Optional[str]
+    archiveDate: Optional[str]
+    setAside: Optional[str]
+    setAsideCode: Optional[str]
+    reponseDeadLine: Optional[str]
+    naicsCode: Optional[str]
+    classificationCode: Optional[str]
+    active: Optional[bool]
+    award: Optional[Award]
+    pointofContact: Optional[PointOfContact]
+    description: Optional[str]
+    organizationType: Optional[str]
+    officeAddress: Optional[Address]
+    placeOfPerformance: Optional[Address]
+    additionalInfoLink: Optional[str]
+    uiLink: Optional[str]
+    links: Optional[List[str]]
+    resourceLinks: Optional[List[str]]
