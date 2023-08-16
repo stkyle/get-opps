@@ -1,26 +1,48 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Aug 15 17:18:35 2023
 
+@author: steve
+"""
+from typing import Optional
 import httpx
-from ratelimit import limits
 from tenacity import retry, stop_after_attempt, wait_fixed
-from cachetools import cached, TTLCache
-from .models import Opportunity, OpportunitiesFilter
-from .exceptions import OpportunitiesAPIException, RateLimitExceededException, UnauthorizedAccessException, GeneralAPIException
-from .transformations import transform_request_filter, transform_response_opportunities
+from ratelimit import limits, RateLimitException
+from opportunities_api.models import OpportunitiesFilter, Opportunity
+from opportunities_api.exceptions import OpportunitiesAPIException
+from opportunities_api.transformations import transform_opportunity
+from opportunities_api.utils import handle_pagination
 import logging
 
 class OpportunitiesAPIClient:
-    PRODUCTION_URL = "https://api.sam.gov/opportunities/v2/search"
-    ALPHA_URL = "https://api-alpha.sam.gov/opportunities/v2/search"
-    _cache = TTLCache(maxsize=100, ttl=300)
+    PRODUCTION_SERVER = "https://api.sam.gov/opportunities/v2/search"
+    ALPHA_SERVER = "https://api-alpha.sam.gov/opportunities/v2/search"
 
-    def __init__(self, api_key: str, base_url: str = PRODUCTION_URL, calls_per_second: int = 10):
-        self.logger = logging.getLogger(__name__)
+    def __init__(self, api_key: str, server: str = PRODUCTION_SERVER):
         self.api_key = api_key
-        self.base_url = base_url
-        self.calls_per_second = calls_per_second
-        self.logger.info(f"Initialized API client with base URL: {base_url}")
+        self.server = server
+        self.logger = logging.getLogger(__name__)
+    
+    @limits(calls=5, period=60)
+    @retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+    def _make_request(self, url: str, params: Optional[dict] = None) -> dict:
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        try:
+            response = httpx.get(url, params=params, headers=headers)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            self.logger.error(f"HTTP Status Error: {e}")
+            raise OpportunitiesAPIException(str(e))
+        except RateLimitException:
+            self.logger.warning("Rate limit exceeded")
+            raise OpportunitiesAPIException("Rate limit exceeded")
 
-    # ... other methods ...
+    def get_opportunities(self, filters: Optional[OpportunitiesFilter] = None) -> list[Opportunity]:
+        url = f"{self.server}/opportunities"
+        params = handle_pagination(page=filters.page, size=filters.size) if filters else None
+        data = self._make_request(url, params=params)
+        return [transform_opportunity(item) for item in data.get("items", [])]
 
     def transform_request_filter(self, filter: OpportunitiesFilter):
         # Transformation logic here
