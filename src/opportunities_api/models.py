@@ -1,8 +1,26 @@
 # -*- coding: utf-8 -*-
 """
-Created on Tue Aug 15 17:18:35 2023
+This module defines the data models for the Opportunities API client.
 
-@author: steve
+It includes classes for handling request parameters, response parameters, and related nested structures.
+
+Example Usage:
+---------------
+from models import RequestParameters, ResponseParameters
+
+# Creating a RequestParameters object
+request_params = RequestParameters(
+    ptype='procurement_type',
+    noticeid='notice_id',
+    solnum='solicitation_number',
+    title='title',
+    state='state',
+    zip='zip_code'
+)
+
+# Creating a ResponseParameters object (e.g., from API response)
+response_params = ResponseParameters.parse_raw(api_response_json)
+@author: stkyle
 """
 from typing import List, Optional
 from pydantic import BaseModel, Field
